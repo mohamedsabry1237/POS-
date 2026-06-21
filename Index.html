@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#15191B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="POS كاشير">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>POS — نقطة البيع</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ink:#15191B;
+  --paper:#FBF8F1;
+  --card:#FFFDF8;
+  --green:#3DDC84;
+  --green-dark:#1FA866;
+  --red:#E5484D;
+  --red-dark:#C73239;
+  --amber:#F59E0B;
+  --blue:#3B82F6;
+  --line:#E6E0D2;
+  --slate:#69655C;
+  --font-ar:'IBM Plex Sans Arabic', sans-serif;
+  --font-mono:'IBM Plex Mono','IBM Plex Sans Arabic', monospace;
+  --radius:14px;
+}
+*{ box-sizing:border-box; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+html,body{ margin:0; padding:0; }
+input, textarea{ -webkit-user-select:text; user-select:text; }
+body{ background:var(--paper); color:var(--ink); font-family:var(--font-ar); font-size:15px; line-height:1.6; }
+
+/* ====== TOPBAR ====== */
+header.topbar{ background:var(--ink); color:var(--paper); width:100%; position:sticky; top:0; z-index:100; }
+.header-inner{ max-width:1300px; margin:0 auto; padding:14px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.header-left .title{ font-weight:700; font-size:18px; }
+.header-left .subtitle{ font-size:12px; color:#B9C2C0; margin-top:1px; }
+.header-right{ display:flex; gap:8px; }
+.install-btn{
+  background:rgba(61,220,132,.15); border:1px solid rgba(61,220,132,.4); color:var(--green);
+  border-radius:8px; padding:7px 14px; font-size:13px; cursor:pointer; font-family:var(--font-ar);
+  display:none; align-items:center; gap:6px; font-weight:600;
+}
+.install-btn.visible{ display:flex; }
+.install-btn:hover{ background:rgba(61,220,132,.25); }
+
+/* ====== NAV TABS ====== */
+.nav-tabs{ background:var(--ink); border-top:1px solid rgba(255,255,255,.1); }
+.nav-inner{ max-width:1300px; margin:0 auto; padding:0 24px; display:flex; gap:0; }
+.tab-btn{
+  background:none; border:none; color:#8B928F; padding:10px 18px; font-size:13.5px;
+  cursor:pointer; font-family:var(--font-ar); font-weight:500; border-bottom:2px solid transparent;
+  transition:all .2s; position:relative;
+}
+.tab-btn:hover{ color:#D8DCDA; }
+.tab-btn.active{ color:var(--green); border-bottom-color:var(--green); }
+.tab-badge{
+  background:var(--red); color:#fff; border-radius:999px; font-size:10px; font-weight:700;
+  padding:1px 5px; margin-right:5px; vertical-align:middle;
+}
+
+/* ====== MAIN ====== */
+main.workspace{ max-width:1300px; margin:0 auto; padding:24px 24px 80px; }
+.tab-panel{ display:none; }
+.tab-panel.active{ display:block; }
+
+/* ====== SCAN STATION ====== */
+.scan-station{
+  background:var(--ink);
+  background-image:repeating-linear-gradient(180deg, rgba(255,255,255,.025) 0px, rgba(255,255,255,.025) 1px, transparent 1px, transparent 3px);
+  border-radius:var(--radius); padding:20px 22px; margin-bottom:22px;
+}
+.status-block{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.status-dot{ width:12px; height:12px; border-radius:50%; background:#4B5054; flex-shrink:0; transition:background .25s; }
+.status-dot.ready{ background:var(--green); animation:breathe 2.2s ease-in-out infinite; }
+.status-dot.flash-success{ background:var(--green); box-shadow:0 0 0 9px rgba(61,220,132,.4); animation:none; }
+.status-dot.flash-error{ background:var(--red); box-shadow:0 0 0 9px rgba(229,72,77,.4); animation:none; }
+@keyframes breathe{ 0%,100%{ box-shadow:0 0 0 3px rgba(61,220,132,.18); } 50%{ box-shadow:0 0 0 7px rgba(61,220,132,.32); } }
+.status-label{ color:#D8DCDA; font-size:13px; font-weight:600; flex:1; }
+
+.scan-controls{ display:flex; gap:8px; align-items:center; }
+.scan-form{ display:flex; gap:8px; flex:1; }
+.scan-form input{
+  flex:1; background:#0F1213; border:1.5px solid rgba(255,255,255,.14); border-radius:10px;
+  padding:12px 14px; font-family:var(--font-mono); font-size:15px; color:#EFEFEC; direction:ltr; text-align:left;
+}
+.scan-form input::placeholder{ color:#6B7270; }
+.scan-form input:focus{ outline:none; border-color:var(--green); box-shadow:0 0 0 3px rgba(61,220,132,.18); }
+.scan-form input:disabled{ opacity:.45; }
+
+/* Scanner activate toggle */
+.scanner-toggle{
+  background:var(--green); color:#0B1A12; border:none; border-radius:10px;
+  padding:0 18px; height:46px; font-weight:700; font-size:13.5px; cursor:pointer;
+  transition:all .2s; white-space:nowrap; font-family:var(--font-ar);
+}
+.scanner-toggle.active{ background:var(--red); color:#fff; }
+.scanner-toggle:hover{ opacity:.88; }
+
+/* Search bar */
+.search-bar{
+  display:flex; gap:8px; margin-bottom:14px;
+}
+.search-bar input{
+  flex:1; background:#fff; border:1.5px solid var(--line); border-radius:9px;
+  padding:9px 14px; font-family:var(--font-ar); font-size:14px; color:var(--ink);
+}
+.search-bar input:focus{ outline:none; border-color:var(--green-dark); box-shadow:0 0 0 3px rgba(31,168,102,.13); }
+.search-clear{ background:var(--paper); border:1.5px solid var(--line); border-radius:9px; padding:0 12px; cursor:pointer; font-size:15px; }
+
+.scan-caption{ color:#8B928F; font-size:11.5px; margin:6px 2px 0; }
+.quick-chips{ display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+.chip{
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); color:#E8EAE8;
+  border-radius:999px; padding:6px 12px; font-size:13px; cursor:pointer; transition:background .15s;
+}
+.chip:hover{ background:rgba(255,255,255,.18); }
+.last-scan{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin-top:14px; padding-top:12px; border-top:1px dashed rgba(255,255,255,.16);
+  color:#C9CECC; font-size:13px;
+}
+.last-scan.is-success{ color:var(--green); }
+.last-scan.is-error{ color:#F08F92; }
+.last-scan button{
+  background:transparent; border:1px solid rgba(255,255,255,.3); color:#fff;
+  border-radius:8px; padding:5px 11px; font-size:12px; cursor:pointer; flex-shrink:0; font-family:var(--font-ar);
+}
+.last-scan button:hover{ background:rgba(255,255,255,.1); }
+
+/* ====== COLUMNS ====== */
+.columns{ display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap; }
+.panel-products{ flex:1 1 420px; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px; }
+.panel-receipt{ flex:0 1 340px; min-width:270px; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px; position:sticky; top:110px; }
+
+h2.section-title{ font-weight:700; font-size:14.5px; border-inline-start:3px solid var(--green-dark); padding-inline-start:10px; margin:0 0 14px; }
+h2.section-title.with-gap{ margin-top:22px; }
+
+.field-row{ display:flex; gap:10px; margin-bottom:10px; }
+.field-row > div{ flex:1; }
+label.field-label{ display:block; font-weight:600; font-size:12px; color:var(--slate); margin-bottom:4px; }
+input[type=text], input[type=number]{
+  width:100%; background:#fff; border:1.5px solid var(--line); border-radius:9px;
+  padding:8px 11px; font-family:var(--font-ar); font-size:14px; color:var(--ink);
+}
+input.mono{ font-family:var(--font-mono); }
+input:focus{ outline:none; border-color:var(--green-dark); box-shadow:0 0 0 3px rgba(31,168,102,.13); }
+.barcode-field{ display:flex; gap:6px; }
+.barcode-field input{ flex:1; }
+.dice-btn{ background:var(--paper); border:1.5px solid var(--line); border-radius:9px; width:36px; cursor:pointer; font-size:14px; flex-shrink:0; }
+.dice-btn:hover{ background:var(--line); }
+.icon-field{ max-width:70px; text-align:center; }
+
+.form-actions{ display:flex; align-items:center; gap:10px; margin-top:6px; }
+.btn-primary{ background:var(--ink); color:#fff; border:none; border-radius:9px; padding:9px 18px; font-weight:600; font-size:13.5px; cursor:pointer; }
+.btn-primary:hover{ opacity:.88; }
+.btn-text{ background:none; border:none; color:var(--slate); font-size:13px; cursor:pointer; text-decoration:underline; font-family:var(--font-ar); }
+.alert, .form-success{ margin-top:8px; border-radius:9px; padding:8px 12px; font-size:13px; }
+.alert{ background:rgba(229,72,77,.08); border:1px solid rgba(229,72,77,.28); color:var(--red-dark); }
+.form-success{ background:rgba(31,168,102,.08); border:1px solid rgba(31,168,102,.28); color:var(--green-dark); }
+[hidden]{ display:none !important; }
+
+table{ width:100%; border-collapse:collapse; margin-top:14px; font-size:13.5px; }
+thead th{ text-align:start; color:var(--slate); font-size:11.5px; font-weight:600; padding:0 7px 7px; border-bottom:1px solid var(--line); }
+tbody td{ padding:9px 7px; border-bottom:1px solid var(--line); }
+td.mono{ font-family:var(--font-mono); font-size:12.5px; }
+tbody button{ border:none; background:none; cursor:pointer; font-size:12px; font-weight:600; padding:4px 8px; border-radius:7px; font-family:var(--font-ar); }
+tbody button[data-edit]{ color:var(--ink); background:var(--paper); }
+tbody button[data-edit]:hover{ background:var(--line); }
+tbody button.danger{ color:var(--red-dark); }
+tbody button.danger:hover{ background:rgba(229,72,77,.1); }
+
+/* ====== RECEIPT PANEL ====== */
+.receipt-header{ text-align:center; border-bottom:2px dashed var(--line); padding-bottom:12px; margin-bottom:12px; }
+.receipt-header .icon{ font-size:24px; }
+.receipt-header .label{ font-family:var(--font-mono); font-size:11.5px; color:var(--slate); letter-spacing:.05em; margin-top:3px; }
+
+#cartList{ min-height:50px; }
+.empty-receipt{ color:var(--slate); font-size:13px; text-align:center; padding:16px 6px; }
+.receipt-row{ display:flex; align-items:baseline; gap:5px; font-family:var(--font-mono); font-size:13px; padding:5px 0; }
+.ri-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px; }
+.ri-dots{ flex:1; border-bottom:2px dotted var(--line); height:0; transform:translateY(-4px); }
+.ri-qty{ display:flex; align-items:center; gap:3px; white-space:nowrap; }
+.ri-qty button{ width:17px; height:17px; border-radius:5px; border:1px solid var(--line); background:#fff; cursor:pointer; font-size:10px; line-height:1; padding:0; }
+.ri-price{ font-weight:600; white-space:nowrap; min-width:44px; text-align:left; }
+.ri-remove{ background:none; border:none; color:var(--red-dark); cursor:pointer; font-size:14px; padding:0 2px; }
+
+.receipt-summary{ border-top:2px dashed var(--line); margin-top:12px; padding-top:12px; }
+.item-summary{ font-size:12px; color:var(--slate); font-family:var(--font-mono); margin-bottom:7px; }
+.grand-total-row{ display:flex; justify-content:space-between; align-items:baseline; font-weight:700; font-size:17px; }
+.grand-total-row .label{ font-size:13px; font-weight:600; }
+#grandTotal{ font-family:var(--font-mono); }
+
+.receipt-actions{ display:flex; gap:8px; margin-top:12px; }
+.btn-save-invoice{
+  flex:1; background:var(--green-dark); color:#fff; border:none; border-radius:9px;
+  padding:9px 0; font-weight:700; font-size:13px; cursor:pointer; font-family:var(--font-ar);
+}
+.btn-save-invoice:hover{ background:#198a54; }
+.btn-print-invoice{
+  background:var(--paper); border:1.5px solid var(--ink); color:var(--ink); border-radius:9px;
+  padding:9px 12px; cursor:pointer; display:flex; align-items:center; gap:6px; font-weight:600; font-size:13px;
+  font-family:var(--font-ar);
+}
+.btn-print-invoice:hover{ background:var(--ink); color:#fff; }
+.new-invoice-btn{
+  width:100%; margin-top:8px; background:var(--paper); border:1.5px solid var(--line); color:var(--slate);
+  border-radius:9px; padding:8px 0; font-weight:600; font-size:13px; cursor:pointer; font-family:var(--font-ar);
+}
+.new-invoice-btn:hover{ background:var(--line); }
+
+/* ====== INVOICES LOG ====== */
+.invoices-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.invoices-header h2{ margin:0; font-size:16px; font-weight:700; }
+.btn-danger-sm{ background:rgba(229,72,77,.1); border:1px solid rgba(229,72,77,.3); color:var(--red-dark); border-radius:8px; padding:6px 12px; font-size:12.5px; cursor:pointer; font-family:var(--font-ar); }
+.btn-danger-sm:hover{ background:rgba(229,72,77,.2); }
+
+.invoices-empty{ text-align:center; color:var(--slate); padding:48px 16px; font-size:14px; }
+.invoice-card{
+  background:var(--card); border:1px solid var(--line); border-radius:12px; margin-bottom:12px;
+  overflow:hidden;
+}
+.invoice-card-header{
+  display:flex; align-items:center; gap:12px; padding:14px 16px;
+  cursor:pointer; user-select:none;
+}
+.invoice-card-header:hover{ background:rgba(0,0,0,.02); }
+.inv-num{ font-family:var(--font-mono); font-weight:700; font-size:13px; color:var(--green-dark); min-width:44px; }
+.inv-info{ flex:1; }
+.inv-date{ font-size:12px; color:var(--slate); }
+.inv-items{ font-size:13px; font-weight:500; }
+.inv-total{ font-family:var(--font-mono); font-weight:700; font-size:15px; }
+.inv-actions{ display:flex; gap:6px; }
+.inv-actions button{ border:none; border-radius:7px; padding:5px 10px; font-size:12px; cursor:pointer; font-family:var(--font-ar); font-weight:600; }
+.inv-print{ background:var(--paper); border:1px solid var(--line) !important; color:var(--ink); }
+.inv-print:hover{ background:var(--line); }
+.inv-delete{ background:rgba(229,72,77,.08); color:var(--red-dark); }
+.inv-delete:hover{ background:rgba(229,72,77,.18); }
+.invoice-items{ padding:0 16px 14px; border-top:1px solid var(--line); display:none; }
+.invoice-items.open{ display:block; }
+.invoice-item-row{ display:flex; justify-content:space-between; font-size:13px; padding:4px 0; border-bottom:1px dotted var(--line); }
+.invoice-item-row:last-child{ border:none; }
+
+/* Stats bar */
+.stats-bar{ display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+.stat-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; flex:1; min-width:120px; }
+.stat-card .sc-label{ font-size:11.5px; color:var(--slate); font-weight:600; margin-bottom:4px; }
+.stat-card .sc-value{ font-family:var(--font-mono); font-size:20px; font-weight:700; }
+.stat-card .sc-value.green{ color:var(--green-dark); }
+
+/* ====== TOAST ====== */
+.toast{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
+  background:var(--ink); color:#fff; border-radius:10px; padding:10px 20px; font-size:13.5px;
+  font-weight:600; z-index:9999; transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+  opacity:0; pointer-events:none; white-space:nowrap;
+}
+.toast.show{ transform:translateX(-50%) translateY(0); opacity:1; }
+.toast.success{ background:var(--green-dark); }
+.toast.error{ background:var(--red-dark); }
+
+/* ====== THERMAL PRINT ====== */
+@media print {
+  body > *:not(#printArea){ display:none !important; }
+  #printArea{
+    display:block !important; width:80mm; margin:0 auto; font-family:'Courier New', monospace;
+    font-size:12px; color:#000; background:#fff; padding:4mm;
+  }
+  #printArea .thermal-title{ text-align:center; font-size:16px; font-weight:bold; margin-bottom:8px; }
+  #printArea .thermal-divider{ border:none; border-top:1px dashed #000; margin:6px 0; }
+  #printArea .thermal-row{ display:flex; justify-content:space-between; margin:3px 0; font-size:11px; }
+  #printArea .thermal-item-name{ flex:1; overflow:hidden; }
+  #printArea .thermal-total-row{ display:flex; justify-content:space-between; font-weight:bold; font-size:14px; margin-top:4px; }
+  #printArea .thermal-footer{ text-align:center; font-size:10px; margin-top:10px; color:#555; }
+  #printArea .thermal-inv-num{ text-align:center; font-size:10px; color:#777; }
+  @page{ size:80mm auto; margin:2mm; }
+}
+#printArea{ display:none; }
+
+/* ====== RESPONSIVE ====== */
+@media (max-width:760px){
+  .panel-receipt{ position:static; flex-basis:100%; }
+  main.workspace{ padding:16px 14px 60px; }
+  .scan-station{ padding:16px; }
+  .field-row{ flex-direction:column; }
+  .header-inner{ padding:10px 14px; }
+  .nav-inner{ padding:0 14px; overflow-x:auto; }
+  .tab-btn{ padding:9px 12px; font-size:12.5px; white-space:nowrap; }
+  .stats-bar{ gap:8px; }
+  .stat-card{ padding:10px 12px; min-width:100px; }
+  .stat-card .sc-value{ font-size:17px; }
+}
+</style>
+</head>
+<body>
+
+<!-- PRINT AREA (hidden, shown only when printing) -->
+<div id="printArea"></div>
+
+<header class="topbar">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="title">🏪 POS — نقطة البيع</div>
+      <div class="subtitle">كاشير متكامل · حفظ الفواتير · طباعة حرارية</div>
+    </div>
+    <div class="header-right">
+      <button class="install-btn" id="installBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v13M8 12l4 4 4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        تثبيت التطبيق
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <div class="nav-inner">
+    <button class="tab-btn active" data-tab="cashier">🏧 الكاشير</button>
+    <button class="tab-btn" data-tab="invoices">🧾 الفواتير <span class="tab-badge" id="invoicesBadge">0</span></button>
+    <button class="tab-btn" data-tab="products">📦 المنتجات</button>
+  </div>
+</nav>
+
+<main class="workspace">
+
+<!-- ===================== TAB: CASHIER ===================== -->
+<div class="tab-panel active" id="tab-cashier">
+
+  <section class="scan-station">
+    <div class="status-block">
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-label" id="statusLabel">السكانر معطّل — اضغط "تنشيط" للبدء</span>
+    </div>
+    <div class="scan-controls">
+      <form class="scan-form" id="scanForm" autocomplete="off">
+        <input type="text" id="scanInput" placeholder="امسح الباركود أو اكتبه يدويًا…" dir="ltr" disabled>
+        <button type="submit" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px;padding:0 16px;font-weight:600;font-size:13.5px;cursor:pointer;font-family:var(--font-ar);">إدخال</button>
+      </form>
+      <button class="scanner-toggle" id="scannerToggle">تنشيط</button>
+    </div>
+    <p class="scan-caption">اضغط "تنشيط" ثم مرّر الباركود، أو اضغط على أي صنف أدناه ↓</p>
+    <div class="quick-chips" id="quickChips"></div>
+    <div class="last-scan" id="lastScan" aria-live="polite">
+      <span id="lastScanText">في انتظار أول مسح…</span>
+      <button type="button" id="toastAction" hidden>➕ إضافة كمنتج</button>
+    </div>
+  </section>
+
+  <div class="columns">
+    <!-- RECEIPT -->
+    <aside class="panel-receipt">
+      <div class="receipt-header">
+        <div class="icon">🧾</div>
+        <div class="label">الفاتورة الحالية</div>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" id="receiptSearch" placeholder="بحث باسم المنتج أو الباركود…" dir="auto">
+        <button class="search-clear" id="receiptSearchClear" title="مسح البحث">✕</button>
+      </div>
+
+      <div id="cartList"></div>
+
+      <div class="receipt-summary">
+        <div class="item-summary" id="itemSummary">عدد الأصناف: 0 · القطع: 0</div>
+        <div class="grand-total-row">
+          <span class="label">الإجمالي</span>
+          <span id="grandTotal">0.00 ج.م</span>
+        </div>
+      </div>
+
+      <div class="receipt-actions">
+        <button class="btn-save-invoice" id="saveInvoiceBtn">💾 حفظ الفاتورة</button>
+        <button class="btn-print-invoice" id="printInvoiceBtn" title="طباعة الفاتورة">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          طباعة
+        </button>
+      </div>
+      <button type="button" class="new-invoice-btn" id="newInvoiceBtn">🗑️ فاتورة جديدة (مسح الحالية)</button>
+    </aside>
+
+    <!-- PRODUCT SEARCH / QUICK ADD in cashier -->
+    <section class="panel-products" style="flex:1 1 380px;">
+      <h2 class="section-title">بحث في المنتجات</h2>
+      <div class="search-bar">
+        <input type="text" id="productSearch" placeholder="ابحث بالاسم أو الباركود…" dir="auto">
+        <button class="search-clear" id="productSearchClear" title="مسح">✕</button>
+      </div>
+      <table>
+        <thead><tr><th>الباركود</th><th>المنتج</th><th>السعر</th><th></th></tr></thead>
+        <tbody id="cashierProductsBody"></tbody>
+      </table>
+    </section>
+  </div>
+
+</div>
+
+<!-- ===================== TAB: INVOICES ===================== -->
+<div class="tab-panel" id="tab-invoices">
+
+  <div class="invoices-header">
+    <h2>🧾 سجل الفواتير</h2>
+    <button class="btn-danger-sm" id="clearAllInvoices">🗑️ مسح الكل</button>
+  </div>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+      <div class="sc-label">إجمالي الفواتير</div>
+      <div class="sc-value" id="statCount">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">إجمالي المبيعات</div>
+      <div class="sc-value green" id="statRevenue">0.00 ج.م</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">متوسط الفاتورة</div>
+      <div class="sc-value" id="statAvg">0.00 ج.م</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">اليوم</div>
+      <div class="sc-value green" id="statToday">0.00 ج.م</div>
+    </div>
+  </div>
+
+  <div id="invoicesList"></div>
+</div>
+
+<!-- ===================== TAB: PRODUCTS ===================== -->
+<div class="tab-panel" id="tab-products">
+
+  <div class="columns">
+    <section class="panel-products">
+      <h2 class="section-title">إضافة / تعديل منتج</h2>
+      <form id="productForm">
+        <div class="field-row">
+          <div>
+            <label class="field-label" for="pBarcode">الباركود</label>
+            <div class="barcode-field">
+              <input type="text" id="pBarcode" class="mono" dir="ltr" placeholder="6221001234567">
+              <button type="button" class="dice-btn" id="pRandomBarcode" title="توليد عشوائي">🎲</button>
+            </div>
+          </div>
+          <div style="flex:0 0 70px">
+            <label class="field-label" for="pIcon">أيقونة</label>
+            <input type="text" id="pIcon" class="icon-field" placeholder="🏷️" maxlength="2">
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label class="field-label" for="pName">اسم المنتج</label>
+            <input type="text" id="pName" dir="auto" placeholder="مثال: شيبس بطاطس">
+          </div>
+          <div style="flex:0 0 130px">
+            <label class="field-label" for="pPrice">السعر (ج.م)</label>
+            <input type="number" id="pPrice" class="mono" dir="ltr" step="0.01" min="0" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="formSubmitBtn">إضافة المنتج</button>
+          <button type="button" class="btn-text" id="formCancelBtn" hidden>إلغاء التعديل</button>
+        </div>
+        <p class="alert" id="formError" hidden role="alert"></p>
+        <p class="form-success" id="formSuccess" hidden></p>
+      </form>
+
+      <h2 class="section-title with-gap">المنتجات المسجّلة</h2>
+      <div class="search-bar">
+        <input type="text" id="manageSearch" placeholder="بحث…" dir="auto">
+        <button class="search-clear" id="manageSearchClear">✕</button>
+      </div>
+      <table>
+        <thead><tr><th>الباركود</th><th>المنتج</th><th>السعر</th><th colspan="2"></th></tr></thead>
+        <tbody id="productsTableBody"></tbody>
+      </table>
+    </section>
+  </div>
+
+</div>
+
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   HELPERS
+============================================================ */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function checkDigitEAN13(d12){ let s=0; for(let i=0;i<12;i++) s+=parseInt(d12[i],10)*(i%2===0?1:3); return ((10-(s%10))%10).toString(); }
+function ean13(d12){ return d12+checkDigitEAN13(d12); }
+function randomEAN13(){ let d=''; for(let i=0;i<12;i++) d+=Math.floor(Math.random()*10); return ean13(d); }
+const CURRENCY='ج.م';
+function formatDate(ts){
+  const d=new Date(ts);
+  return d.toLocaleDateString('ar-EG',{year:'numeric',month:'short',day:'numeric'})
+    +' '+d.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+}
+function todayStr(){ return new Date().toDateString(); }
+
+/* ============================================================
+   TOAST
+============================================================ */
+let toastTimer=null;
+function showToast(msg,type='',dur=2400){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(type||'');
+  void t.offsetWidth; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+/* ============================================================
+   AUDIO
+============================================================ */
+let audioCtx=null;
+function ensureAudio(){ if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }
+function beep(freq,dur,type,vol){
+  if(!audioCtx) return;
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type=type||'sine'; o.frequency.value=freq; g.gain.value=vol||0.18;
+  o.connect(g); g.connect(audioCtx.destination);
+  const now=audioCtx.currentTime; o.start(now);
+  g.gain.exponentialRampToValueAtTime(0.0001,now+dur); o.stop(now+dur);
+}
+function beepSuccess(){ beep(1100,.09,'sine',.2); }
+function beepError(){ beep(220,.16,'square',.16); setTimeout(()=>beep(180,.18,'square',.16),130); }
+
+/* ============================================================
+   STORAGE — localStorage fallback
+============================================================ */
+const STORAGE_KEYS={ products:'pos_products', invoices:'pos_invoices' };
+function lsGet(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+/* ============================================================
+   DATA
+============================================================ */
+function seedProducts(){
+  const seeds=[
+    ['622010100001','🥔','شيبس بطاطس',12.00],
+    ['622010100002','💧','مياه معدنية',5.00],
+    ['622010100003','🥤','مشروب غازي',8.50],
+    ['622010100004','🍫','شوكولاتة',15.00],
+    ['622010100005','🍪','بسكويت',7.00],
+    ['622010100006','🧃','عصير',9.00],
+    ['622010100007','🍬','علكة',3.00],
+    ['622010100008','🧻','مناديل ورقية',18.00]
+  ];
+  return seeds.map(([base,icon,name,price])=>({barcode:ean13(base),icon,name,price}));
+}
+
+let products=lsGet(STORAGE_KEYS.products)||seedProducts();
+if(!lsGet(STORAGE_KEYS.products)) lsSet(STORAGE_KEYS.products,products);
+
+let invoices=lsGet(STORAGE_KEYS.invoices)||[];
+let cart=[];
+let editingBarcode=null;
+let scannerActive=false;
+let invoiceCounter=invoices.length>0 ? Math.max(...invoices.map(i=>i.num)) : 0;
+
+function saveProducts(){ lsSet(STORAGE_KEYS.products,products); }
+function saveInvoices(){ lsSet(STORAGE_KEYS.invoices,invoices); }
+
+/* ============================================================
+   TABS
+============================================================ */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='invoices') renderInvoicesList();
+    if(btn.dataset.tab==='products'){ renderProductsTable(); }
+    if(btn.dataset.tab==='cashier'){ renderCashierProducts(); }
+  });
+});
+
+/* ============================================================
+   SCANNER TOGGLE
+============================================================ */
+const scannerToggle=document.getElementById('scannerToggle');
+const scanInput=document.getElementById('scanInput');
+const statusDot=document.getElementById('statusDot');
+const statusLabel=document.getElementById('statusLabel');
+
+scannerToggle.addEventListener('click',()=>{
+  scannerActive=!scannerActive;
+  scanInput.disabled=!scannerActive;
+  if(scannerActive){
+    scannerToggle.textContent='منشط';
+    scannerToggle.classList.add('active');
+    statusDot.classList.add('ready');
+    statusLabel.textContent='جاهز للمسح';
+    scanInput.focus();
+    ensureAudio();
+  } else {
+    scannerToggle.textContent='تنشيط';
+    scannerToggle.classList.remove('active');
+    statusDot.classList.remove('ready','flash-success','flash-error');
+    statusLabel.textContent='السكانر معطّل — اضغط "تنشيط" للبدء';
+    scanInput.blur();
+  }
+});
+
+function flashStatus(kind){
+  statusDot.classList.remove('flash-success','flash-error');
+  void statusDot.offsetWidth;
+  statusDot.classList.add(kind==='success'?'flash-success':'flash-error');
+  setTimeout(()=>statusDot.classList.remove('flash-success','flash-error'),500);
+}
+
+/* ============================================================
+   SCAN PROCESSING
+============================================================ */
+const lastScan=document.getElementById('lastScan');
+const lastScanText=document.getElementById('lastScanText');
+const toastAction=document.getElementById('toastAction');
+
+function offerAddProduct(code){
+  toastAction.hidden=false;
+  toastAction.onclick=()=>{
+    document.querySelector('[data-tab="products"]').click();
+    setTimeout(()=>{
+      document.getElementById('pBarcode').value=code;
+      document.getElementById('pName').focus();
+    },100);
+  };
+}
+
+function processScan(code){
+  if(!scannerActive){ showToast('فعّل السكانر أولاً','error'); return; }
+  ensureAudio(); toastAction.hidden=true;
+  const product=products.find(p=>p.barcode===code);
+  if(product){
+    addToCart(product); beepSuccess(); flashStatus('success');
+    lastScan.className='last-scan is-success';
+    lastScanText.textContent=`✅ «${product.icon} ${product.name}» — ${product.price.toFixed(2)} ${CURRENCY}`;
+  } else {
+    beepError(); flashStatus('error');
+    lastScan.className='last-scan is-error';
+    lastScanText.textContent=`⚠️ باركود غير معروف: ${code}`;
+    offerAddProduct(code);
+  }
+}
+
+document.getElementById('scanForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const code=scanInput.value.trim();
+  scanInput.value='';
+  if(code) processScan(code);
+  scanInput.focus();
+});
+
+document.getElementById('quickChips').addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-test]');
+  if(btn) processScan(btn.dataset.test);
+});
+
+/* ============================================================
+   CART
+============================================================ */
+function addToCart(product){
+  const existing=cart.find(c=>c.barcode===product.barcode);
+  if(existing) existing.qty++;
+  else cart.push({barcode:product.barcode,icon:product.icon,name:product.name,price:product.price,qty:1});
+  renderCart();
+}
+
+let receiptSearchTerm='';
+document.getElementById('receiptSearch').addEventListener('input',e=>{
+  receiptSearchTerm=e.target.value.toLowerCase();
+  renderCart();
+});
+document.getElementById('receiptSearchClear').addEventListener('click',()=>{
+  document.getElementById('receiptSearch').value='';
+  receiptSearchTerm='';
+  renderCart();
+});
+
+function renderCart(){
+  const list=document.getElementById('cartList');
+  const filtered=receiptSearchTerm
+    ? cart.filter(i=>i.name.toLowerCase().includes(receiptSearchTerm)||i.barcode.includes(receiptSearchTerm))
+    : cart;
+
+  if(!cart.length){
+    list.innerHTML=`<p class="empty-receipt">لا توجد أصناف — امسح باركود أو اضغط على صنف</p>`;
+  } else if(!filtered.length){
+    list.innerHTML=`<p class="empty-receipt">لا نتائج بحث</p>`;
+  } else {
+    list.innerHTML=filtered.map(item=>`
+      <div class="receipt-row">
+        <span class="ri-name">${escapeHtml(item.icon)} ${escapeHtml(item.name)}</span>
+        <span class="ri-dots"></span>
+        <span class="ri-qty">
+          <button type="button" data-action="dec" data-barcode="${escapeHtml(item.barcode)}">−</button>
+          ×${item.qty}
+          <button type="button" data-action="inc" data-barcode="${escapeHtml(item.barcode)}">+</button>
+        </span>
+        <span class="ri-price">${(item.price*item.qty).toFixed(2)}</span>
+        <button type="button" class="ri-remove" data-action="remove" data-barcode="${escapeHtml(item.barcode)}">×</button>
+      </div>`).join('');
+  }
+  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const pieces=cart.reduce((s,i)=>s+i.qty,0);
+  document.getElementById('itemSummary').textContent=`عدد الأصناف: ${cart.length} · القطع: ${pieces}`;
+  document.getElementById('grandTotal').textContent=total.toFixed(2)+' '+CURRENCY;
+}
+
+document.getElementById('cartList').addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-action]');
+  if(!btn) return;
+  const barcode=btn.dataset.barcode;
+  const item=cart.find(c=>c.barcode===barcode);
+  if(!item) return;
+  if(btn.dataset.action==='inc') item.qty++;
+  else if(btn.dataset.action==='dec'){ item.qty--; if(item.qty<=0) cart=cart.filter(c=>c.barcode!==barcode); }
+  else if(btn.dataset.action==='remove') cart=cart.filter(c=>c.barcode!==barcode);
+  renderCart();
+});
+
+document.getElementById('newInvoiceBtn').addEventListener('click',()=>{
+  if(cart.length&&!confirm('هتمسح الفاتورة الحالية؟')) return;
+  cart=[]; renderCart();
+  lastScan.className='last-scan'; lastScanText.textContent='في انتظار أول مسح…';
+});
+
+/* ============================================================
+   SAVE INVOICE
+============================================================ */
+document.getElementById('saveInvoiceBtn').addEventListener('click',()=>{
+  if(!cart.length){ showToast('الفاتورة فارغة!','error'); return; }
+  invoiceCounter++;
+  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const inv={
+    num:invoiceCounter,
+    ts:Date.now(),
+    items:cart.map(i=>({...i})),
+    total,
+    itemCount:cart.length,
+    pieces:cart.reduce((s,i)=>s+i.qty,0)
+  };
+  invoices.unshift(inv);
+  saveInvoices();
+  updateBadge();
+  showToast(`✅ تم حفظ الفاتورة #${invoiceCounter}`,'success');
+  cart=[]; renderCart();
+  lastScan.className='last-scan'; lastScanText.textContent='في انتظار أول مسح…';
+});
+
+function updateBadge(){
+  document.getElementById('invoicesBadge').textContent=invoices.length;
+}
+
+/* ============================================================
+   PRINT INVOICE
+============================================================ */
+function buildPrintArea(inv){
+  const now=inv?formatDate(inv.ts):formatDate(Date.now());
+  const items=inv?inv.items:cart;
+  const total=inv?inv.total:cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const num=inv?inv.num:('مؤقت');
+  const pieces=inv?inv.pieces:cart.reduce((s,i)=>s+i.qty,0);
+
+  const rows=items.map(item=>`
+    <div class="thermal-row">
+      <span class="thermal-item-name">${item.icon||''} ${item.name}</span>
+      <span>×${item.qty}</span>
+      <span>${(item.price*item.qty).toFixed(2)}</span>
+    </div>
+    <div class="thermal-row" style="color:#666;font-size:10px;margin-top:-3px;">
+      <span>${item.price.toFixed(2)} × ${item.qty}</span>
+    </div>
+  `).join('');
+
+  return `
+    <div class="thermal-title">🏪 نقطة البيع</div>
+    <div class="thermal-inv-num">فاتورة رقم: ${num}</div>
+    <div class="thermal-inv-num">${now}</div>
+    <hr class="thermal-divider">
+    ${rows}
+    <hr class="thermal-divider">
+    <div class="thermal-row" style="font-size:11px;color:#555;"><span>عدد الأصناف: ${items.length}</span><span>القطع: ${pieces}</span></div>
+    <div class="thermal-total-row"><span>الإجمالي</span><span>${total.toFixed(2)} ${CURRENCY}</span></div>
+    <hr class="thermal-divider">
+    <div class="thermal-footer">شكرًا لتسوّقك معنا 🙏</div>
+    <div class="thermal-footer">نتمنى لك يومًا سعيدًا ✨</div>
+  `;
+}
+
+function printInvoice(inv){
+  const hasItems=inv?inv.items.length>0:cart.length>0;
+  if(!hasItems){ showToast('لا توجد أصناف للطباعة','error'); return; }
+  document.getElementById('printArea').innerHTML=buildPrintArea(inv);
+  window.print();
+}
+
+document.getElementById('printInvoiceBtn').addEventListener('click',()=>printInvoice(null));
+
+/* ============================================================
+   INVOICES LIST
+============================================================ */
+function renderInvoicesList(){
+  updateStats();
+  const el=document.getElementById('invoicesList');
+  if(!invoices.length){
+    el.innerHTML=`<div class="invoices-empty">🧾<br><br>لا توجد فواتير محفوظة بعد.<br>ابدأ بإضافة منتجات للفاتورة واضغط "حفظ".</div>`;
+    return;
+  }
+  el.innerHTML=invoices.map(inv=>`
+    <div class="invoice-card" id="inv-${inv.num}">
+      <div class="invoice-card-header" data-inv="${inv.num}">
+        <span class="inv-num">#${inv.num}</span>
+        <div class="inv-info">
+          <div class="inv-date">${formatDate(inv.ts)}</div>
+          <div class="inv-items">${inv.itemCount} صنف · ${inv.pieces} قطعة</div>
+        </div>
+        <span class="inv-total">${inv.total.toFixed(2)} ${CURRENCY}</span>
+        <div class="inv-actions">
+          <button class="inv-print" data-print="${inv.num}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            طباعة
+          </button>
+          <button class="inv-delete" data-delete="${inv.num}">حذف</button>
+        </div>
+      </div>
+      <div class="invoice-items" id="inv-items-${inv.num}">
+        ${inv.items.map(item=>`
+          <div class="invoice-item-row">
+            <span>${item.icon||''} ${escapeHtml(item.name)} ×${item.qty}</span>
+            <span>${(item.price*item.qty).toFixed(2)} ${CURRENCY}</span>
+          </div>
+        `).join('')}
+        <div class="invoice-item-row" style="font-weight:700;margin-top:4px;">
+          <span>الإجمالي</span><span>${inv.total.toFixed(2)} ${CURRENCY}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('invoicesList').addEventListener('click',e=>{
+  // Toggle items
+  const header=e.target.closest('.invoice-card-header');
+  if(header&&!e.target.closest('button')){
+    const num=header.dataset.inv;
+    const items=document.getElementById('inv-items-'+num);
+    if(items) items.classList.toggle('open');
+    return;
+  }
+  // Print
+  const printBtn=e.target.closest('[data-print]');
+  if(printBtn){
+    const num=parseInt(printBtn.dataset.print);
+    const inv=invoices.find(i=>i.num===num);
+    if(inv) printInvoice(inv);
+    return;
+  }
+  // Delete
+  const delBtn=e.target.closest('[data-delete]');
+  if(delBtn){
+    const num=parseInt(delBtn.dataset.delete);
+    if(!confirm(`حذف الفاتورة #${num}؟`)) return;
+    invoices=invoices.filter(i=>i.num!==num);
+    saveInvoices(); updateBadge(); renderInvoicesList();
+    showToast('تم حذف الفاتورة','');
+  }
+});
+
+document.getElementById('clearAllInvoices').addEventListener('click',()=>{
+  if(!invoices.length) return;
+  if(!confirm('حذف كل الفواتير؟ هذا الإجراء لا يمكن التراجع عنه.')) return;
+  invoices=[]; invoiceCounter=0; saveInvoices(); updateBadge(); renderInvoicesList();
+  showToast('تم مسح جميع الفواتير');
+});
+
+/* ============================================================
+   STATS
+============================================================ */
+function updateStats(){
+  const total=invoices.reduce((s,i)=>s+i.total,0);
+  const avg=invoices.length?total/invoices.length:0;
+  const todayTotal=invoices.filter(i=>new Date(i.ts).toDateString()===todayStr()).reduce((s,i)=>s+i.total,0);
+  document.getElementById('statCount').textContent=invoices.length;
+  document.getElementById('statRevenue').textContent=total.toFixed(2)+' '+CURRENCY;
+  document.getElementById('statAvg').textContent=avg.toFixed(2)+' '+CURRENCY;
+  document.getElementById('statToday').textContent=todayTotal.toFixed(2)+' '+CURRENCY;
+}
+
+/* ============================================================
+   PRODUCTS TABLE
+============================================================ */
+let manageSearchTerm='';
+document.getElementById('manageSearch').addEventListener('input',e=>{ manageSearchTerm=e.target.value.toLowerCase(); renderProductsTable(); });
+document.getElementById('manageSearchClear').addEventListener('click',()=>{ document.getElementById('manageSearch').value=''; manageSearchTerm=''; renderProductsTable(); });
+
+function renderProductsTable(){
+  const filtered=manageSearchTerm
+    ? products.filter(p=>p.name.toLowerCase().includes(manageSearchTerm)||p.barcode.includes(manageSearchTerm))
+    : products;
+  document.getElementById('productsTableBody').innerHTML=filtered.map(p=>`
+    <tr>
+      <td class="mono">${escapeHtml(p.barcode)}</td>
+      <td>${escapeHtml(p.icon)} ${escapeHtml(p.name)}</td>
+      <td class="mono">${p.price.toFixed(2)}</td>
+      <td><button type="button" data-edit="${escapeHtml(p.barcode)}">تعديل</button></td>
+      <td><button type="button" data-del="${escapeHtml(p.barcode)}" class="danger">حذف</button></td>
+    </tr>`).join('');
+}
+
+function renderQuickChips(){
+  document.getElementById('quickChips').innerHTML=products.map(p=>
+    `<button type="button" class="chip" data-test="${escapeHtml(p.barcode)}">${escapeHtml(p.icon)} ${escapeHtml(p.name)}</button>`
+  ).join('');
+}
+
+/* ============================================================
+   CASHIER PRODUCTS SEARCH
+============================================================ */
+let cashierSearchTerm='';
+document.getElementById('productSearch').addEventListener('input',e=>{ cashierSearchTerm=e.target.value.toLowerCase(); renderCashierProducts(); });
+document.getElementById('productSearchClear').addEventListener('click',()=>{ document.getElementById('productSearch').value=''; cashierSearchTerm=''; renderCashierProducts(); });
+
+function renderCashierProducts(){
+  const filtered=cashierSearchTerm
+    ? products.filter(p=>p.name.toLowerCase().includes(cashierSearchTerm)||p.barcode.includes(cashierSearchTerm))
+    : products;
+  document.getElementById('cashierProductsBody').innerHTML=filtered.map(p=>`
+    <tr>
+      <td class="mono" style="font-size:11.5px;">${escapeHtml(p.barcode)}</td>
+      <td>${escapeHtml(p.icon)} ${escapeHtml(p.name)}</td>
+      <td class="mono">${p.price.toFixed(2)}</td>
+      <td><button type="button" onclick="addToCart(products.find(x=>x.barcode==='${escapeHtml(p.barcode)}'))" style="background:var(--green-dark);color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:var(--font-ar);font-weight:600;">➕ أضف</button></td>
+    </tr>`).join('');
+}
+
+/* ============================================================
+   PRODUCT FORM
+============================================================ */
+document.getElementById('productsTableBody').addEventListener('click',e=>{
+  const editBtn=e.target.closest('button[data-edit]');
+  const delBtn=e.target.closest('button[data-del]');
+  if(editBtn) startEdit(editBtn.dataset.edit);
+  if(delBtn) deleteProduct(delBtn.dataset.del);
+});
+
+function startEdit(barcode){
+  const p=products.find(x=>x.barcode===barcode);
+  if(!p) return;
+  editingBarcode=barcode;
+  document.getElementById('pBarcode').value=p.barcode;
+  document.getElementById('pBarcode').disabled=true;
+  document.getElementById('pIcon').value=p.icon;
+  document.getElementById('pName').value=p.name;
+  document.getElementById('pPrice').value=p.price;
+  document.getElementById('formSubmitBtn').textContent='حفظ التعديلات';
+  document.getElementById('formCancelBtn').hidden=false;
+  document.getElementById('productForm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function cancelEdit(){
+  editingBarcode=null;
+  document.getElementById('productForm').reset();
+  document.getElementById('pBarcode').disabled=false;
+  document.getElementById('formSubmitBtn').textContent='إضافة المنتج';
+  document.getElementById('formCancelBtn').hidden=true;
+}
+function deleteProduct(barcode){
+  if(!confirm('حذف المنتج؟')) return;
+  products=products.filter(p=>p.barcode!==barcode);
+  saveProducts(); renderProductsTable(); renderQuickChips(); renderCashierProducts();
+  showToast('تم حذف المنتج');
+}
+
+document.getElementById('formCancelBtn').addEventListener('click',cancelEdit);
+document.getElementById('pRandomBarcode').addEventListener('click',()=>{
+  document.getElementById('pBarcode').value=randomEAN13();
+});
+
+function showFormError(msg){ const el=document.getElementById('formError'); el.textContent=msg; el.hidden=false; }
+function showFormSuccess(msg){ const el=document.getElementById('formSuccess'); el.textContent=msg; el.hidden=false; setTimeout(()=>{ el.hidden=true; },2200); }
+
+document.getElementById('productForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  document.getElementById('formError').hidden=true;
+  const barcode=document.getElementById('pBarcode').value.trim();
+  const icon=document.getElementById('pIcon').value.trim()||'🏷️';
+  const name=document.getElementById('pName').value.trim();
+  const price=parseFloat(document.getElementById('pPrice').value);
+  if(!barcode||!name||isNaN(price)||price<0){ showFormError('تحقق من تعبئة الباركود والاسم والسعر.'); return; }
+  if(editingBarcode){
+    const p=products.find(x=>x.barcode===editingBarcode);
+    p.icon=icon; p.name=name; p.price=price;
+    showFormSuccess('تم تحديث بيانات المنتج.'); cancelEdit();
+  } else {
+    const exists=products.find(x=>x.barcode===barcode);
+    if(exists){ exists.icon=icon; exists.name=name; exists.price=price; showFormSuccess('باركود موجود — تم تحديث بياناته.'); }
+    else { products.push({barcode,icon,name,price}); showFormSuccess('تمت إضافة المنتج بنجاح.'); }
+    document.getElementById('productForm').reset();
+  }
+  saveProducts(); renderProductsTable(); renderQuickChips(); renderCashierProducts();
+});
+
+/* ============================================================
+   PWA INSTALL
+============================================================ */
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault(); deferredPrompt=e;
+  document.getElementById('installBtn').classList.add('visible');
+});
+document.getElementById('installBtn').addEventListener('click',async()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const result=await deferredPrompt.userChoice;
+  if(result.outcome==='accepted') showToast('✅ تم تثبيت التطبيق!','success');
+  deferredPrompt=null;
+  document.getElementById('installBtn').classList.remove('visible');
+});
+window.addEventListener('appinstalled',()=>{ document.getElementById('installBtn').classList.remove('visible'); });
+
+/* ============================================================
+   SERVICE WORKER
+============================================================ */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+(function init(){
+  renderQuickChips();
+  renderCashierProducts();
+  renderCart();
+  updateBadge();
+  updateStats();
+})();
+</script>
+</body>
+</html>
